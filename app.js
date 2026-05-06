@@ -24,7 +24,7 @@ new Chart(ctxRevenue, {
             'Suborbital'
         ],
         datasets: [{
-            data: [5.0, 4.2, 3.8, 0.5], // Values in Billions
+            data: [5.0, 4.2, 12.8, 0.5], // Values in Billions
             backgroundColor: [
                 colors.cyan,
                 colors.amber,
@@ -79,7 +79,7 @@ new Chart(ctxGrowth, {
         datasets: [
             {
                 label: 'Projected Revenue ($B)',
-                data: [1.0, 1.8, 3.2, 6.0, 9.5, 13.5],
+                data: [1.0, 2.0, 4.0, 8.5, 14.5, 22.5],
                 borderColor: colors.amber,
                 backgroundColor: gradientFill,
                 borderWidth: 3,
