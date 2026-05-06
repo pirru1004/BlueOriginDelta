@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BLUE — Blue Origin IPO Valuation Terminal</title>
+
+<!-- Typography: Fraunces (editorial serif) + IBM Plex Sans (technical body) + JetBrains Mono (numerics) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<style>
+  :root {
+    --bg-void:        #07090d;
+    --bg-deep:        #0b0e14;
+    --bg-elevated:    #11151d;
+    --bg-card:        #161b25;
+    --bg-card-hi:     #1b2230;
+    --border:         #232b3a;
+    --border-bright:  #2f3a4f;
+    --text-primary:   #f0f4fb;
+    --text-secondary: #97a2b6;
+    --text-tertiary:  #5b6479;
+    --text-muted:     #3f4759;
+
+    --accent-amber:   #f5a524;
+    --accent-amber-soft: rgba(245,165,36,0.12);
+    --accent-cyan:    #2bd4e4;
+    --accent-cyan-soft: rgba(43,212,228,0.10);
+    --positive:       #34d399;
+    --negative:       #f87171;
+    --warning:        #fbbf24;
+    --magenta:        #e879c9;
+
+    --grid-line:      rgba(255,255,255,0.04);
+    --grid-line-hi:   rgba(255,255,255,0.08);
+
+    --shadow-soft: 0 1px 2px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.35);
+    --shadow-glow-amber: 0 0 0 1px rgba(245,165,36,0.18), 0 12px 40px -8px rgba(245,165,36,0.08);
+    --shadow-glow-cyan:  0 0 0 1px rgba(43,212,228,0.18), 0 12px 40px -8px rgba(43,212,228,0.08);
+
+    --radius: 6px;
+    --radius-lg: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Subtle grid texture across the whole canvas — financial-terminal vibe */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 56px 56px;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, black 40%, transparent 100%);
+  }
+
+  /* Top scanline glow */
+  body::after {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--accent-cyan) 30%, var(--accent-amber) 70%, transparent 100%);
+    opacity: 0.5;
+    z-index: 100;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 28px 32px 64px;
+  }
+
+  /* ============ HEADER / TICKER BAR ============ */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 14px;
+    margin-bottom: 28px;
+  }
+  .brand {
+    display: flex; align-items: baseline; gap: 14px;
+  }
+  .brand-mark {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: var(--accent-cyan);
+    padding: 4px 8px;
+    border: 1px solid var(--accent-cyan);
+    border-radius: 3px;
+    background: var(--accent-cyan-soft);
+  }
+  .brand-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+  }
+  .brand-subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+  }
+  .top-meta {
+    display: flex; gap: 28px; align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+  }
+  .top-meta .value { color: var(--text-secondary); }
+  .status-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--warning);
+    margin-right: 6px;
+    box-shadow: 0 0 8px var(--warning);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  /* ============ TICKER STRIP ============ */
+  .ticker-strip {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-elevated);
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+  .ticker {
+    padding: 12px 16px;
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .ticker:last-child { border-right: none; }
+  .ticker-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+  }
+  .ticker-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .ticker-delta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .delta-up   { color: var(--positive); }
+  .delta-down { color: var(--negative); }
+  .delta-warn { color: var(--warning); }
+
+  /* ============ SECTION HEADINGS ============ */
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 36px 0 16px;
+  }
+  .section-head:first-child { margin-top: 0; }
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 13px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::before {
+    content: "";
+    width: 6px; height: 6px;
+    background: var(--accent-amber);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent-amber);
+  }
+  .section-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  /* ============ HERO VALUATION CARDS ============ */
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 16px;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  .card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
+  }
+  .card:hover { border-color: var(--border-bright); }
+
+  .card-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-tag {
+    font-size: 9px;
+    padding: 2px 6px;
+    border: 1px solid var(--border-bright);
+    border-radius: 2px;
+    color: var(--text-secondary);
+    background: var(--bg-elevated);
+    letter-spacing: 0.16em;
+  }
+
+  .hero-card-primary {
+    background:
+      radial-gradient(ellipse 120% 80% at 0% 0%, var(--accent-amber-soft) 0%, transparent 50%),
+      var(--bg-card);
+    border-color: rgba(245,165,36,0.25);
+  }
+  .hero-card-primary::before {
+    background: linear-gradient(90deg, transparent, var(--accent-amber), transparent);
+    opacity: 0.7;
+  }
+  .valuation-mega {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 64px;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: var(--text-primary);
+    margin: 8px 0 4px;
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  .valuation-mega .currency {
+    font-size: 28px;
+    color: var(--accent-amber);
+    font-weight: 500;
+  }
+  .valuation-mega .unit {
+    font-size: 22px;
+    color: var(--text-tertiary);
+    font-weight: 400;
+    margin-left: 4px;
+  }
+  .valuation-sub {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 12px;
+    line-height: 1.55;
+  }
+  .valuation-sub strong { color: var(--text-primary); font-weight: 600; }
+
+  .kpi-large {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 38px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin: 6px 0 2px;
+  }
+  .kpi-large .currency { color: var(--accent-cyan); font-weight: 500; }
+  .kpi-foot {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.06em;
+    margin-top: 14px;
+  }
+
+  /* Entry / stop price card with split */
+  .split-card { padding: 0; }
+  .split-row {
+    padding: 20px 24px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .split-row:last-child { border-bottom: none; }
+  .split-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .split-label.entry { color: var(--positive); }
+  .split-label.stop  { color: var(--negative); }
+  .split-label::before {
+    content: "";
+    display: inline-block; width: 4px; height: 12px;
+    background: currentColor;
+  }
+  .split-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 28px;
+    color: var(--text-primary);
+    letter-spacing: -0.015em;
+  }
+  .split-value .currency {
+    color: var(--text-tertiary);
+    font-size: 18px;
+    font-weight: 500;
+    margin-right: 2px;
+  }
+  .split-note {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+  }
+
+  /* ============ CHART CARDS ============ */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 16px;
+  }
+  .chart-card { padding: 22px 24px 24px; min-height: 380px; }
+  .chart-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .chart-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 17px;
+    letter-spacing: -0.005em;
+    color: var(--text-primary);
+  }
+  .chart-subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .chart-canvas-wrap {
+    position: relative;
+    height: 320px;
+  }
+  /* Custom legend below pie chart */
+  .seg-legend {
+    margin-top: 16px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .seg-row {
+    display: grid;
+    grid-template-columns: 14px 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .seg-row:last-child { border-bottom: none; }
+  .seg-swatch { width: 10px; height: 10px; border-radius: 2px; }
+  .seg-name { color: var(--text-secondary); font-family: 'IBM Plex Sans', sans-serif; }
+  .seg-val  { color: var(--text-primary); font-weight: 600; }
+  .seg-pct  { color: var(--text-tertiary); }
+
+  /* ============ METHODOLOGY + RISKS ============ */
+  .lower-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 16px;
+  }
+  .method-card { padding: 24px; }
+  .method-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 19px;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    letter-spacing: -0.005em;
+  }
+  .method-subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--accent-amber);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .method-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin-bottom: 18px;
+  }
+  .method-text em {
+    color: var(--text-primary);
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  /* SOTP table */
+  .sotp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+  .sotp-table thead th {
+    font-weight: 500;
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-bright);
+    color: var(--text-tertiary);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .sotp-table thead th:nth-child(2),
+  .sotp-table thead th:nth-child(3) { text-align: right; }
+  .sotp-table tbody td {
+    padding: 10px;
+    border-bottom: 1px dashed var(--border);
+    color: var(--text-secondary);
+  }
+  .sotp-table tbody td:first-child {
+    color: var(--text-primary);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12.5px;
+  }
+  .sotp-table tbody td:nth-child(2),
+  .sotp-table tbody td:nth-child(3) { text-align: right; color: var(--text-primary); }
+  .sotp-table tfoot td {
+    padding: 12px 10px 4px;
+    font-weight: 700;
+    color: var(--accent-amber);
+    border-top: 1px solid var(--accent-amber);
+  }
+  .sotp-table tfoot td:first-child {
+    font-family: 'Fraunces', serif;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 11px;
+  }
+  .sotp-table tfoot td:nth-child(3) { text-align: right; font-size: 14px; }
+
+  /* Risk panel */
+  .risk-card {
+    padding: 0;
+    border-color: rgba(248,113,113,0.22);
+    background:
+      radial-gradient(ellipse 100% 60% at 100% 0%, rgba(248,113,113,0.06) 0%, transparent 60%),
+      var(--bg-card);
+  }
+  .risk-card::before {
+    background: linear-gradient(90deg, transparent, var(--negative), transparent);
+    opacity: 0.6;
+  }
+  .risk-head {
+    padding: 22px 24px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .risk-head-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 19px;
+    color: var(--text-primary);
+  }
+  .risk-flag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--negative);
+    padding: 4px 8px;
+    border: 1px solid rgba(248,113,113,0.4);
+    border-radius: 3px;
+    background: rgba(248,113,113,0.08);
+  }
+  .risk-list { padding: 8px 0; }
+  .risk-item {
+    padding: 16px 24px;
+    border-bottom: 1px dashed var(--border);
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    align-items: start;
+    gap: 14px;
+  }
+  .risk-item:last-child { border-bottom: none; }
+  .risk-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text-tertiary);
+    padding-top: 1px;
+  }
+  .risk-body { }
+  .risk-name {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .risk-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+  .risk-sev {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    padding: 3px 7px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    align-self: start;
+    margin-top: 1px;
+  }
+  .sev-high { color: var(--negative); background: rgba(248,113,113,0.10); border: 1px solid rgba(248,113,113,0.3); }
+  .sev-mid  { color: var(--warning);  background: rgba(251,191,36,0.10); border: 1px solid rgba(251,191,36,0.3); }
+  .sev-low  { color: var(--positive); background: rgba(52,211,153,0.10); border: 1px solid rgba(52,211,153,0.3); }
+
+  /* ============ FOOTER ============ */
+  .footer {
+    margin-top: 36px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .footer .footer-disclaimer {
+    max-width: 720px;
+    line-height: 1.7;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 1100px) {
+    .hero-grid, .charts-grid, .lower-grid { grid-template-columns: 1fr; }
+    .ticker-strip { grid-template-columns: repeat(3, 1fr); }
+    .ticker:nth-child(3) { border-right: none; }
+    .ticker:nth-child(4),
+    .ticker:nth-child(5),
+    .ticker:nth-child(6) { border-top: 1px solid var(--border); }
+    .valuation-mega { font-size: 48px; }
+    .valuation-mega .currency { font-size: 22px; }
+  }
+  @media (max-width: 640px) {
+    .app { padding: 18px 16px 48px; }
+    .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .top-meta { gap: 16px; flex-wrap: wrap; }
+    .ticker-strip { grid-template-columns: repeat(2, 1fr); }
+    .ticker:nth-child(2n) { border-right: none; }
+    .ticker:nth-child(n+3) { border-top: 1px solid var(--border); }
+    .valuation-mega { font-size: 40px; }
+    .footer { flex-direction: column; gap: 12px; align-items: flex-start; }
+  }
+
+  /* small intro animation on load */
+  .card, .ticker-strip, .topbar { animation: rise 0.5s ease-out both; }
+  .ticker-strip { animation-delay: 0.05s; }
+  .hero-grid .card:nth-child(1) { animation-delay: 0.10s; }
+  .hero-grid .card:nth-child(2) { animation-delay: 0.15s; }
+  .hero-grid .card:nth-child(3) { animation-delay: 0.20s; }
+  .charts-grid .card:nth-child(1) { animation-delay: 0.25s; }
+  .charts-grid .card:nth-child(2) { animation-delay: 0.30s; }
+  .lower-grid .card:nth-child(1)  { animation-delay: 0.35s; }
+  .lower-grid .card:nth-child(2)  { animation-delay: 0.40s; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ========== TOPBAR ========== -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">BLUE</span>
+      <div>
+        <div class="brand-title">Blue Origin · IPO Valuation Terminal</div>
+        <div class="brand-subtitle">Sum-of-the-Parts · Pre-Listing Coverage Initiation</div>
+      </div>
+    </div>
+    <div class="top-meta">
+      <div><span class="status-dot"></span>FAA Mishap Investigation Active</div>
+      <div>Date <span class="value" id="todayDate">—</span></div>
+      <div>Coverage <span class="value">Pre-IPO</span></div>
+      <div>Analyst <span class="value">A. Quant</span></div>
+    </div>
+  </header>
+
+  <!-- ========== TICKER STRIP ========== -->
+  <div class="ticker-strip">
+    <div class="ticker">
+      <div class="ticker-label">Implied Mkt Cap</div>
+      <div class="ticker-value">$135.0B</div>
+      <div class="ticker-delta delta-up">+ Methodology: SOTP</div>
+    </div>
+    <div class="ticker">
+      <div class="ticker-label">Shares Outstanding</div>
+      <div class="ticker-value">1,000,000,000</div>
+      <div class="ticker-delta">Pro-forma post-IPO</div>
+    </div>
+    <div class="ticker">
+      <div class="ticker-label">Implied Price / Share</div>
+      <div class="ticker-value">$135.00</div>
+      <div class="ticker-delta delta-up">SOTP Mid-Case</div>
+    </div>
+    <div class="ticker">
+      <div class="ticker-label">Backlog ($B)</div>
+      <div class="ticker-value">~$11.4B</div>
+      <div class="ticker-delta delta-up">+ Artemis V $3.4B</div>
+    </div>
+    <div class="ticker">
+      <div class="ticker-label">2030E Revenue</div>
+      <div class="ticker-value">$13.5B</div>
+      <div class="ticker-delta delta-up">+68% CAGR '25–'30</div>
+    </div>
+    <div class="ticker">
+      <div class="ticker-label">NG Cadence Target</div>
+      <div class="ticker-value">60 / yr</div>
+      <div class="ticker-delta delta-warn">⚠ FAA Grounded · Apr 2026</div>
+    </div>
+  </div>
+
+  <!-- ========== HERO VALUATION CARDS ========== -->
+  <div class="section-head">
+    <div class="section-title">Valuation Snapshot</div>
+    <div class="section-meta">SOTP · MID-CASE · 2030E</div>
+  </div>
+
+  <div class="hero-grid">
+
+    <!-- Total Market Valuation -->
+    <div class="card hero-card-primary">
+      <div class="card-label">
+        <span>Total Market Valuation</span>
+        <span class="card-tag">PRIMARY</span>
+      </div>
+      <div class="valuation-mega">
+        <span class="currency">$</span>135.0<span class="unit">B</span>
+      </div>
+      <div class="valuation-sub">
+        Sum-of-the-Parts enterprise value across <strong>five segments</strong>: Commercial Launch &amp; Engines, Government &amp; Lunar Infrastructure, TeraWave Satcom (risk-adjusted), Suborbital, and Optionality (Reef / Ring / Alchemist).
+        Bull case <strong>$182B</strong> · Bear case <strong>$94B</strong>.
+      </div>
+    </div>
+
+    <!-- Implied Share Price -->
+    <div class="card">
+      <div class="card-label">
+        <span>Implied Share Price</span>
+        <span class="card-tag">1.0B SHARES</span>
+      </div>
+      <div class="kpi-large"><span class="currency">$</span>135.00</div>
+      <div class="kpi-foot">PER SHARE · UNDILUTED</div>
+      <div class="valuation-sub">
+        Calculated as $135.0B EV ÷ 1,000,000,000 shares outstanding (pro-forma post-IPO float assumption).
+      </div>
+    </div>
+
+    <!-- Entry / Stop -->
+    <div class="card split-card">
+      <div class="split-row">
+        <div class="split-label entry">Recommended Entry</div>
+        <div class="split-value"><span class="currency">$</span>118.00</div>
+        <div class="split-note">12.5% margin-of-safety vs. SOTP mid-case</div>
+      </div>
+      <div class="split-row">
+        <div class="split-label stop">Stop Price</div>
+        <div class="split-value"><span class="currency">$</span>95.00</div>
+        <div class="split-note">Breaches Gov+Lunar floor — implies SOTP collapse</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========== CHARTS ========== -->
+  <div class="section-head">
+    <div class="section-title">Revenue Architecture &amp; Cadence Scaling</div>
+    <div class="section-meta">FY2025 — FY2030E</div>
+  </div>
+
+  <div class="charts-grid">
+
+    <!-- Revenue Breakdown -->
+    <div class="card chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">Revenue Breakdown — 2030E</div>
+          <div class="chart-subtitle">Segment Mix · Total $13.5B</div>
+        </div>
+      </div>
+      <div class="chart-canvas-wrap" style="height:240px;">
+        <canvas id="revenueChart"></canvas>
+      </div>
+      <div class="seg-legend" id="revLegend"><!-- injected --></div>
+    </div>
+
+    <!-- Growth + Cadence -->
+    <div class="card chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">Market Growth vs. New Glenn Cadence</div>
+          <div class="chart-subtitle">Revenue ($B, LHS) · NG Flights / Year (RHS)</div>
+        </div>
+      </div>
+      <div class="chart-canvas-wrap">
+        <canvas id="growthChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========== METHODOLOGY + RISKS ========== -->
+  <div class="section-head">
+    <div class="section-title">Methodology &amp; Risk Disclosure</div>
+    <div class="section-meta">REQUIRED · IPO PROSPECTUS APPENDIX</div>
+  </div>
+
+  <div class="lower-grid">
+
+    <!-- Methodology -->
+    <div class="card method-card">
+      <div class="method-title">Sum-of-the-Parts (SOTP) with EV/Backlog Cross-Check</div>
+      <div class="method-subtitle">PRIMARY · DCF SECONDARY</div>
+      <p class="method-text">
+        Blue Origin's businesses span <em>five distinct economic models</em> — recurring engine sales, milestone-based government contracts, pre-revenue satcom CapEx, suborbital tourism, and orbital infrastructure optionality — making a blended multiple inappropriate. We value each segment on its closest public comparable, then risk-adjust pre-revenue assets (TeraWave) for execution and CapEx exposure. Government &amp; Lunar is sanity-checked against <em>EV/Backlog of 4.0x</em> (vs. peer range 3.2x–5.1x).
+      </p>
+
+      <table class="sotp-table">
+        <thead>
+          <tr><th>Segment</th><th>Method</th><th>EV ($B)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Commercial Launch &amp; Engines</td><td>16x 2030E Rev</td><td>60.0</td></tr>
+          <tr><td>Government &amp; Lunar Infrastructure</td><td>4.0x EV/Backlog</td><td>40.0</td></tr>
+          <tr><td>TeraWave Satcom (risk-adjusted)</td><td>8x · 50% haircut</td><td>28.0</td></tr>
+          <tr><td>Suborbital (New Shepard)</td><td>4x 2030E Rev</td><td>2.0</td></tr>
+          <tr><td>Optionality (Reef / Ring / Alchemist)</td><td>Real-options</td><td>5.0</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td>Total Enterprise Value</td><td></td><td>135.0</td></tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Risks -->
+    <div class="card risk-card">
+      <div class="risk-head">
+        <div class="risk-head-title">Risk Factors</div>
+        <div class="risk-flag">3 PRIMARY · MATERIAL</div>
+      </div>
+      <div class="risk-list">
+
+        <div class="risk-item">
+          <div class="risk-num">01</div>
+          <div class="risk-body">
+            <div class="risk-name">FAA Grounding of New Glenn (Apr 2026)</div>
+            <div class="risk-desc">
+              NG-3 BE-3U upper-stage anomaly stranded AST SpaceMobile's BlueBird 7. Mishap investigation indefinite; combined with 2CAT facility damage, 2026 cadence target of 12 launches is materially impaired. Each missed quarter compresses the launch-segment EV by ~$3–5B and delays Blue Moon Mk1 "Endurance" certification.
+            </div>
+          </div>
+          <div class="risk-sev sev-high">High</div>
+        </div>
+
+        <div class="risk-item">
+          <div class="risk-num">02</div>
+          <div class="risk-body">
+            <div class="risk-name">TeraWave CapEx Burden</div>
+            <div class="risk-desc">
+              5,408-satellite LEO/MEO buildout (Q4 2027 onward) requires an estimated $30–45B in cumulative CapEx through 2031. Negative free cash flow window of 4+ years; success contingent on enterprise customer adoption against entrenched Starlink and parallel Amazon Leo. Q/V-band reliability remains commercially unproven at scale.
+            </div>
+          </div>
+          <div class="risk-sev sev-high">High</div>
+        </div>
+
+        <div class="risk-item">
+          <div class="risk-num">03</div>
+          <div class="risk-body">
+            <div class="risk-name">Cadence Scaling Risk</div>
+            <div class="risk-desc">
+              Path from ~3 NG launches in 2026 to 60/year by 2030 implies a 20x ramp — historically unprecedented outside SpaceX. Requires a second pad, BE-4 production scaling, and TeraWave manifest absorption. Each 25% miss vs. cadence target translates to ~$8–12B EV impairment on the launch segment.
+            </div>
+          </div>
+          <div class="risk-sev sev-mid">Mid</div>
+        </div>
+
+        <div class="risk-item">
+          <div class="risk-num">04</div>
+          <div class="risk-body">
+            <div class="risk-name">Customer &amp; Program Concentration</div>
+            <div class="risk-desc">
+              Top-3 backlog exposure: Amazon Leo, NASA Artemis (Blue Moon Mk2), and DoD NSSL Phase 3. Cancellation, descope, or NASA budget reauthorization risk could cascade across multiple segments simultaneously.
+            </div>
+          </div>
+          <div class="risk-sev sev-mid">Mid</div>
+        </div>
+
+        <div class="risk-item">
+          <div class="risk-num">05</div>
+          <div class="risk-body">
+            <div class="risk-name">Suborbital Pause</div>
+            <div class="risk-desc">
+              Announced 2-year suspension of New Shepard tourism flights compresses suborbital segment NPV. Modest absolute impact (~$1B EV) but a sentiment headwind on the IPO roadshow.
+            </div>
+          </div>
+          <div class="risk-sev sev-low">Low</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer">
+    <div class="footer-disclaimer">
+      <strong style="color: var(--text-secondary);">Disclaimer.</strong>
+      This dashboard is a model exercise for educational/illustrative purposes only. Blue Origin is privately held by Jeff Bezos and has not announced an IPO at the time of publication. All segment values, multiples, cadence assumptions, and price targets are analyst estimates and do not constitute investment advice or an offer to sell securities.
+    </div>
+    <div>v1.0 · Build 2026.05</div>
+  </footer>
+
+</div>
+
+<script>
+  // ============ DATE ============
+  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', {
+    year: 'numeric', month: 'short', day: '2-digit'
+  }).toUpperCase();
+
+  // ============ CHART.JS THEME ============
+  const palette = {
+    primary:   getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
+    secondary: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(),
+    tertiary:  getComputedStyle(document.documentElement).getPropertyValue('--text-tertiary').trim(),
+    grid:      'rgba(255,255,255,0.05)',
+    gridHi:    'rgba(255,255,255,0.10)',
+    amber:     '#f5a524',
+    cyan:      '#2bd4e4',
+    magenta:   '#e879c9',
+    teal:      '#34d399',
+    plum:      '#a78bfa',
+    bg:        '#161b25'
+  };
+
+  Chart.defaults.color = palette.tertiary;
+  Chart.defaults.borderColor = palette.grid;
+  Chart.defaults.font.family = "'IBM Plex Sans', system-ui, sans-serif";
+  Chart.defaults.font.size = 11;
+
+  // ============ REVENUE BREAKDOWN (DOUGHNUT) ============
+  const segments = [
+    { name: 'LEO/MEO Satcom (TeraWave)',                     value: 5.0, color: palette.cyan },
+    { name: 'Government & Lunar (NSSL, Blue Moon, Honeybee)', value: 4.2, color: palette.amber },
+    { name: 'Commercial Launch & Engines (Amazon Leo, BE-4)', value: 3.8, color: palette.magenta },
+    { name: 'Suborbital (New Shepard)',                       value: 0.5, color: palette.teal }
+  ];
+  const total2030 = segments.reduce((s, x) => s + x.value, 0);
+
+  new Chart(document.getElementById('revenueChart'), {
+    type: 'doughnut',
+    data: {
+      labels: segments.map(s => s.name),
+      datasets: [{
+        data: segments.map(s => s.value),
+        backgroundColor: segments.map(s => s.color),
+        borderColor: palette.bg,
+        borderWidth: 3,
+        hoverOffset: 8,
+        spacing: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0b0e14',
+          borderColor: '#2f3a4f',
+          borderWidth: 1,
+          titleColor: palette.primary,
+          bodyColor: palette.secondary,
+          titleFont: { family: "'JetBrains Mono', monospace", size: 11, weight: '600' },
+          bodyFont:  { family: "'JetBrains Mono', monospace", size: 11 },
+          padding: 10,
+          cornerRadius: 4,
+          callbacks: {
+            label: ctx => ` $${ctx.parsed.toFixed(1)}B  ·  ${(ctx.parsed / total2030 * 100).toFixed(1)}%`
+          }
+        }
+      }
+    },
+    plugins: [{
+      id: 'centerText',
+      afterDraw: (chart) => {
+        const { ctx, chartArea: { width, height, left, top } } = chart;
+        ctx.save();
+        const cx = left + width / 2;
+        const cy = top + height / 2;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = palette.tertiary;
+        ctx.font = "500 9px 'JetBrains Mono', monospace";
+        ctx.fillText('2030E REVENUE', cx, cy - 16);
+        ctx.fillStyle = palette.primary;
+        ctx.font = "700 22px 'JetBrains Mono', monospace";
+        ctx.fillText('$' + total2030.toFixed(1) + 'B', cx, cy + 6);
+        ctx.fillStyle = palette.amber;
+        ctx.font = "500 9px 'JetBrains Mono', monospace";
+        ctx.fillText('+68% CAGR', cx, cy + 24);
+        ctx.restore();
+      }
+    }]
+  });
+
+  // Custom legend rows
+  const legendEl = document.getElementById('revLegend');
+  segments.forEach(s => {
+    const pct = (s.value / total2030 * 100).toFixed(1);
+    const row = document.createElement('div');
+    row.className = 'seg-row';
+    row.innerHTML = `
+      <div class="seg-swatch" style="background:${s.color}"></div>
+      <div class="seg-name">${s.name}</div>
+      <div class="seg-val">$${s.value.toFixed(1)}B</div>
+      <div class="seg-pct">${pct}%</div>
+    `;
+    legendEl.appendChild(row);
+  });
+
+  // ============ GROWTH + CADENCE (DUAL-AXIS LINE) ============
+  const years = ['2025', '2026', '2027', '2028', '2029', '2030'];
+  const revenue = [1.0, 1.8, 3.2, 6.0, 9.5, 13.5];      // $B
+  const cadence = [2,    3,   10,  25,  45,  60];        // NG flights / year
+  const cadenceTarget = [60, 60, 60, 60, 60, 60];        // dashed reference at 60
+
+  // Gradient builder for revenue area
+  const buildGradient = (ctx, area, color) => {
+    const g = ctx.createLinearGradient(0, area.top, 0, area.bottom);
+    g.addColorStop(0,    color + 'BF');
+    g.addColorStop(0.5,  color + '40');
+    g.addColorStop(1,    color + '00');
+    return g;
+  };
+
+  new Chart(document.getElementById('growthChart'), {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: [
+        {
+          label: 'Projected Revenue ($B)',
+          data: revenue,
+          borderColor: palette.amber,
+          backgroundColor: (ctx) => {
+            const { chart } = ctx;
+            const { ctx: c, chartArea } = chart;
+            if (!chartArea) return null;
+            return buildGradient(c, chartArea, palette.amber);
+          },
+          borderWidth: 2.5,
+          tension: 0.35,
+          fill: true,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: palette.amber,
+          pointBorderColor: '#0b0e14',
+          pointBorderWidth: 2,
+          yAxisID: 'yRev'
+        },
+        {
+          label: 'New Glenn Flights / Year',
+          data: cadence,
+          borderColor: palette.cyan,
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          tension: 0.3,
+          fill: false,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: palette.cyan,
+          pointBorderColor: '#0b0e14',
+          pointBorderWidth: 2,
+          yAxisID: 'yCad'
+        },
+        {
+          label: 'Cadence Target (60/yr)',
+          data: cadenceTarget,
+          borderColor: palette.tertiary,
+          borderWidth: 1,
+          borderDash: [4, 4],
+          fill: false,
+          pointRadius: 0,
+          yAxisID: 'yCad'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          align: 'end',
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'rectRounded',
+            padding: 14,
+            color: palette.secondary,
+            font: { family: "'JetBrains Mono', monospace", size: 10 },
+            filter: (item) => item.text !== 'Cadence Target (60/yr)'
+          }
+        },
+        tooltip: {
+          backgroundColor: '#0b0e14',
+          borderColor: '#2f3a4f',
+          borderWidth: 1,
+          titleColor: palette.primary,
+          bodyColor: palette.secondary,
+          titleFont: { family: "'JetBrains Mono', monospace", size: 11, weight: '600' },
+          bodyFont:  { family: "'JetBrains Mono', monospace", size: 11 },
+          padding: 10,
+          cornerRadius: 4,
+          callbacks: {
+            label: (ctx) => {
+              const v = ctx.parsed.y;
+              if (ctx.dataset.yAxisID === 'yRev') return ` Revenue:  $${v.toFixed(1)}B`;
+              if (ctx.dataset.label.includes('Target')) return ` Target:   ${v} flights/yr`;
+              return ` Cadence:  ${v} flights/yr`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: palette.grid, drawTicks: false },
+          ticks: {
+            color: palette.tertiary,
+            font: { family: "'JetBrains Mono', monospace", size: 11, weight: 500 },
+            padding: 8
+          },
+          border: { color: '#2f3a4f' }
+        },
+        yRev: {
+          position: 'left',
+          grid: { color: palette.grid },
+          ticks: {
+            color: palette.amber,
+            font: { family: "'JetBrains Mono', monospace", size: 10, weight: 500 },
+            callback: v => '$' + v + 'B'
+          },
+          border: { display: false },
+          title: {
+            display: true,
+            text: 'REVENUE  ·  $B',
+            color: palette.tertiary,
+            font: { family: "'JetBrains Mono', monospace", size: 9, weight: 600 }
+          }
+        },
+        yCad: {
+          position: 'right',
+          grid: { drawOnChartArea: false },
+          ticks: {
+            color: palette.cyan,
+            font: { family: "'JetBrains Mono', monospace", size: 10, weight: 500 },
+            callback: v => v + ' flts'
+          },
+          border: { display: false },
+          min: 0, max: 70,
+          title: {
+            display: true,
+            text: 'NG CADENCE  ·  FLIGHTS / YR',
+            color: palette.tertiary,
+            font: { family: "'JetBrains Mono', monospace", size: 9, weight: 600 }
+          }
+        }
+      }
+    }
+  });
+</script>
+
+</body>
+</html>
