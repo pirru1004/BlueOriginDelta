@@ -62,7 +62,25 @@ new Chart(ctxRevenue, {
                 }
             }
         }
-    }
+    },
+    plugins: [{
+        id: 'centerLabel',
+        afterDraw(chart) {
+            const { ctx, chartArea: { top, bottom, left, right } } = chart;
+            const cx = (left + right) / 2;
+            const cy = (top + bottom) / 2;
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = "bold 22px 'Outfit', sans-serif";
+            ctx.fillText('$22.5B', cx, cy - 12);
+            ctx.fillStyle = '#8A97A8';
+            ctx.font = "13px 'Inter', sans-serif";
+            ctx.fillText('Total Revenue', cx, cy + 14);
+            ctx.restore();
+        }
+    }]
 });
 
 // 2. Growth vs Cadence (Dual-Axis Line Chart)
