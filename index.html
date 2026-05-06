@@ -7,7 +7,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -35,33 +35,33 @@
     <div class="ticker-strip">
         <div class="ticker">
             <div class="ticker-label">Implied Mkt Cap</div>
-            <div class="ticker-value">$145.0B</div>
-            <div class="ticker-delta delta-up">+ Methodology: Revenue Multiple</div>
+            <div class="ticker-value">$135.0B</div>
+            <div class="ticker-delta delta-up">+ Methodology: SOTP</div>
         </div>
         <div class="ticker">
             <div class="ticker-label">Shares Outstanding</div>
             <div class="ticker-value">1,000,000,000</div>
-            <div class="ticker-delta">Standardized count</div>
+            <div class="ticker-delta">Pro-forma post-IPO</div>
         </div>
         <div class="ticker">
             <div class="ticker-label">Implied Price / Share</div>
-            <div class="ticker-value">$145.00</div>
-            <div class="ticker-delta delta-up">Entry up to $150.00</div>
+            <div class="ticker-value">$135.00</div>
+            <div class="ticker-delta delta-up">SOTP Mid-Case</div>
         </div>
         <div class="ticker">
-            <div class="ticker-label">2026E Revenue</div>
-            <div class="ticker-value">$6.1B</div>
-            <div class="ticker-delta delta-up">+ NG Cadence Scaling</div>
+            <div class="ticker-label">Backlog ($B)</div>
+            <div class="ticker-value">~$11.4B</div>
+            <div class="ticker-delta delta-up">+ Artemis V $3.4B</div>
         </div>
         <div class="ticker">
             <div class="ticker-label">2030E Revenue</div>
-            <div class="ticker-value">$21.5B</div>
-            <div class="ticker-delta delta-up">+ Launch & Lunar scaling</div>
+            <div class="ticker-value">$13.5B</div>
+            <div class="ticker-delta delta-up">+68% CAGR '25–'30</div>
         </div>
         <div class="ticker">
-            <div class="ticker-label">NG Cadence Risk</div>
-            <div class="ticker-value">Critical Path</div>
-            <div class="ticker-delta delta-warn">⚠ Delays affect Kuiper revs</div>
+            <div class="ticker-label">NG Cadence Target</div>
+            <div class="ticker-value">60 / yr</div>
+            <div class="ticker-delta delta-warn">⚠ FAA Grounded · Apr 2026</div>
         </div>
     </div>
 
@@ -70,24 +70,24 @@
         <section class="glass-panel highlight-panel kpi-group">
             <div class="kpi-card main-kpi">
                 <h3>Total Market Valuation</h3>
-                <div class="value-large">$145<span class="unit">B</span></div>
+                <div class="value-large">$135.0<span class="unit">B</span></div>
                 <p class="subtitle">Based on 1,000,000,000 Shares Outstanding</p>
             </div>
             
             <div class="kpi-card recommendation buy">
                 <h3>Final Recommendation</h3>
                 <div class="value-large">BUY</div>
-                <p class="conviction">High Conviction</p>
+                <p class="conviction">High Conviction (SOTP Mid-Case)</p>
             </div>
 
             <div class="pricing-details">
                 <div class="price-box">
-                    <span class="label">Entry Price (Buy Up To)</span>
-                    <span class="price-value">$150.00</span>
+                    <span class="label">Entry Price (12.5% Margin)</span>
+                    <span class="price-value">$118.00</span>
                 </div>
                 <div class="price-box stop-loss">
-                    <span class="label">Stop-Loss Price</span>
-                    <span class="price-value">$115.00</span>
+                    <span class="label">Stop-Loss (SOTP Floor)</span>
+                    <span class="price-value">$95.00</span>
                 </div>
             </div>
         </section>
@@ -96,8 +96,8 @@
         <section class="charts-container">
             <div class="glass-panel chart-panel">
                 <div class="panel-header">
-                    <h2>Revenue Breakdown</h2>
-                    <p>Estimated 2026 Segments ($6.1B Total)</p>
+                    <h2>Revenue Architecture</h2>
+                    <p>Segment Mix · 2030E ($13.5B Total)</p>
                 </div>
                 <div class="chart-wrapper">
                     <canvas id="revenueChart"></canvas>
@@ -106,8 +106,8 @@
 
             <div class="glass-panel chart-panel">
                 <div class="panel-header">
-                    <h2>Growth Projections</h2>
-                    <p>3-5 Year Forecast (2026 - 2030)</p>
+                    <h2>Growth vs Cadence</h2>
+                    <p>Revenue ($B) vs. New Glenn Flights/Year (2025-2030E)</p>
                 </div>
                 <div class="chart-wrapper">
                     <canvas id="growthChart"></canvas>
@@ -120,47 +120,117 @@
             <div class="glass-panel content-panel">
                 <h2>Valuation Methodology</h2>
                 <div class="methodology-content">
-                    <div class="method-badge">Revenue Multiple Approach</div>
-                    <p>We applied a <strong>23.7x forward revenue multiple</strong> on the projected 2026 revenue of $6.1B. This premium valuation is strongly justified by:</p>
-                    <ul>
-                        <li><strong>Massive TAM:</strong> The rapidly expanding commercial space economy.</li>
-                        <li><strong>Secured Contracts:</strong> Multi-billion dollar backlogs including Amazon's Project Kuiper (38 launches) and NASA's Artemis (Blue Moon lander).</li>
-                        <li><strong>Strategic Duopoly:</strong> Blue Origin is the only viable hedge against a SpaceX monopoly in heavy-lift launch, guaranteeing a steady stream of government defense and commercial payloads.</li>
-                    </ul>
+                    <div class="method-badge">Sum-of-the-Parts (SOTP)</div>
+                    <p>Blue Origin's businesses span distinct economic models, making a blended multiple inappropriate. We value each segment on its closest public comparable, risk-adjusting pre-revenue assets (TeraWave). Government & Lunar is sanity-checked against EV/Backlog of 4.0x.</p>
+                    
+                    <div class="table-container">
+                        <table class="sotp-table">
+                            <thead>
+                                <tr>
+                                    <th>Segment</th>
+                                    <th>Method</th>
+                                    <th>EV ($B)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Commercial Launch & Engines</td>
+                                    <td>16x 2030E Rev</td>
+                                    <td class="num">60.0</td>
+                                </tr>
+                                <tr>
+                                    <td>Government & Lunar Infra</td>
+                                    <td>4.0x EV/Backlog</td>
+                                    <td class="num">40.0</td>
+                                </tr>
+                                <tr>
+                                    <td>TeraWave Satcom</td>
+                                    <td>8x · 50% haircut</td>
+                                    <td class="num">28.0</td>
+                                </tr>
+                                <tr>
+                                    <td>Suborbital (New Shepard)</td>
+                                    <td>4x 2030E Rev</td>
+                                    <td class="num">2.0</td>
+                                </tr>
+                                <tr>
+                                    <td>Optionality (Reef/Alchemist)</td>
+                                    <td>Real-options</td>
+                                    <td class="num">5.0</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="2">Total Enterprise Value</td>
+                                    <td class="num">$135.0</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             <div class="glass-panel content-panel risks-panel">
                 <h2>Risk Factors</h2>
                 <div class="risks-list">
+                    
                     <div class="risk-item">
-                        <div class="risk-icon">⚠️</div>
                         <div class="risk-text">
-                            <h4>Technical & Execution Risk</h4>
-                            <p>Any further delays or launch failures with the New Glenn heavy-lift vehicle will push back major revenue realization timelines.</p>
+                            <div class="risk-header">
+                                <h4>FAA Grounding of New Glenn</h4>
+                                <span class="sev-tag sev-high">High</span>
+                            </div>
+                            <p>NG-3 anomaly stranded BlueBird 7. Mishap investigation indefinite; 2026 cadence target of 12 launches is materially impaired.</p>
                         </div>
                     </div>
+
                     <div class="risk-item">
-                        <div class="risk-icon">🎯</div>
                         <div class="risk-text">
-                            <h4>Customer Concentration</h4>
-                            <p>The company currently relies heavily on two major clients: NASA (Artemis) and Amazon (Kuiper). Loss of either would be catastrophic to revenue projections.</p>
+                            <div class="risk-header">
+                                <h4>TeraWave CapEx Burden</h4>
+                                <span class="sev-tag sev-high">High</span>
+                            </div>
+                            <p>5,408-satellite buildout requires $30–45B in CapEx through 2031. Negative free cash flow window of 4+ years against Starlink.</p>
                         </div>
                     </div>
+
                     <div class="risk-item">
-                        <div class="risk-icon">🚀</div>
                         <div class="risk-text">
-                            <h4>Competitive Squeeze</h4>
-                            <p>If SpaceX achieves full rapid reusability with Starship before New Glenn matures, launch market prices could crash faster than Blue Origin can achieve cost parity.</p>
+                            <div class="risk-header">
+                                <h4>Cadence Scaling Risk</h4>
+                                <span class="sev-tag sev-mid">Mid</span>
+                            </div>
+                            <p>Ramping from ~3 NG launches in 2026 to 60/yr by 2030 implies a 20x historical-defying ramp requiring second pad and BE-4 scaling.</p>
                         </div>
                     </div>
+                    
+                    <div class="risk-item">
+                        <div class="risk-text">
+                            <div class="risk-header">
+                                <h4>Customer Concentration</h4>
+                                <span class="sev-tag sev-mid">Mid</span>
+                            </div>
+                            <p>Top-3 backlog exposure: Amazon Leo, NASA Artemis, and DoD NSSL Phase 3. Cancellations could cascade across multiple segments.</p>
+                        </div>
+                    </div>
+
+                    <div class="risk-item">
+                        <div class="risk-text">
+                            <div class="risk-header">
+                                <h4>Suborbital Pause</h4>
+                                <span class="sev-tag sev-low">Low</span>
+                            </div>
+                            <p>Announced 2-year suspension of New Shepard tourism flights compresses segment NPV. Modest impact but a sentiment headwind.</p>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </section>
     </main>
 
     <footer class="glass-panel main-footer">
-        <p>IPO Valuation Lab | Team Delta | Data sourced from hypothetical models for presentation purposes.</p>
+        <p>IPO Valuation Lab | Team Delta | Sourced from comprehensive SOTP financial modeling.</p>
     </footer>
 
     <script src="app.js"></script>
