@@ -32,7 +32,7 @@ body {
     padding: 2rem;
 }
 
-/* Background Effects */
+/* Background Effects: The Karman Line */
 .background-effects {
     position: fixed;
     top: 0;
@@ -40,39 +40,21 @@ body {
     width: 100vw;
     height: 100vh;
     z-index: -1;
-    overflow: hidden;
-    background: radial-gradient(circle at center, #0B1120 0%, #050814 100%);
+    background: linear-gradient(180deg, #02040A 0%, #081226 65%, #0B214D 85%, #154898 96%, #4199E1 100%);
 }
 
-.glow-orb {
+/* Subtle starfield */
+.background-effects::after {
+    content: '';
     position: absolute;
-    border-radius: 50%;
-    filter: blur(120px);
-    opacity: 0.4;
-    animation: float 20s infinite alternate ease-in-out;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image: radial-gradient(rgba(255,255,255,0.8) 1px, transparent 1px);
+    background-size: 150px 150px;
+    background-position: 0 0, 75px 75px;
+    opacity: 0.15;
 }
 
-.orb-1 {
-    top: -10%;
-    left: -10%;
-    width: 50vw;
-    height: 50vw;
-    background: var(--brand-blue);
-}
-
-.orb-2 {
-    bottom: -20%;
-    right: -10%;
-    width: 60vw;
-    height: 60vw;
-    background: #1A0B2E;
-    animation-delay: -10s;
-}
-
-@keyframes float {
-    0% { transform: translate(0, 0) scale(1); }
-    100% { transform: translate(5%, 10%) scale(1.1); }
-}
+/* Optional feather-like subtle geometry could go here, but the clean Karman gradient is perfectly Blue Origin */
 
 /* Typography */
 h1, h2, h3, h4, .value-large {
